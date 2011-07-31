@@ -1,0 +1,8 @@
+# Set up your password:
+# htdigest -c IndieWeb.htpasswd IndieWeb yourusername
+# Put the .htpasswd file in your ServerRoot (probably /etc/httpd/IndieWeb.htpasswd)
+
+AuthType Digest
+AuthName "IndieWeb"
+AuthUserFile IndieWeb.htpasswd
+Require valid-user
