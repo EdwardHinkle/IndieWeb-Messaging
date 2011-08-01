@@ -1,2 +1,3 @@
 <?php
-define('TROPO_TOKEN', '');
+# define('TROPO_TOKEN', '');
+define('EMAIL_RECIPIENT', 'you@example.com');

@@ -45,6 +45,9 @@ if(array_key_exists('from', $_POST) && array_key_exists('text', $_POST)) {
 	else
 		sendAndCloseConnection("Success: Your message was sent without verification.\n");
 	
+	if(isset($N))
+		$N->Send($msg);
+	
 	// Save to a file
 	$filename = date('YmdHis') . '-' . $domain . '.txt';
 	$contents = $from . "\n" 
@@ -52,13 +55,19 @@ if(array_key_exists('from', $_POST) && array_key_exists('text', $_POST)) {
 		. "\n" . $_POST['text'];
 	file_put_contents('received/' . $filename, $contents);
 	
-	// Send the SMS via Tropo
-	$params = array(
-		'action' => 'create',
-		'token' => TROPO_TOKEN,
-		'text' => $msg
-	);
-	file_get_contents('https://api.tropo.com/1.0/sessions?' . http_build_query($params));
+	if(defined('TROPO_TOKEN') && TROPO_TOKEN) {
+		// Send the SMS via Tropo (requires additional setup at Tropo.com)
+		$params = array(
+			'action' => 'create',
+			'token' => TROPO_TOKEN,
+			'text' => $msg
+		);
+		file_get_contents('https://api.tropo.com/1.0/sessions?' . http_build_query($params));
+	}
+	
+	if(defined('EMAIL_RECIPIENT') && EMAIL_RECIPIENT) {
+		mail(EMAIL_RECIPIENT, 'Message from ' . $from, $_POST['text']);
+	}
 }
 else if(array_key_exists('message_id', $_POST)) {
 	// A remote server is asking us to verify that we sent the specified message
@@ -80,6 +89,9 @@ else {
 
 
 function msg($msg) {
+	global $N;
+	if(isset($N))
+		$N->Send('Received from: ' . $_SERVER['SERVER_NAME'] . ' ' . $msg);
 	echo $msg . "\n";
 	die();
 }
@@ -87,7 +99,7 @@ function msg($msg) {
 function sendAndCloseConnection($msg) {
 	// Close the user's browser connection but keep the PHP script running
 	// See http://www.php.net/manual/en/features.connection-handling.php#71172
-	ob_end_clean();
+	@ob_end_clean();
 	header("Connection: close");
 	ignore_user_abort(); // optional
 	ob_start();

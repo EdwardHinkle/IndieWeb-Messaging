@@ -1,5 +1,5 @@
 <?php
-include('config.php');
+include('../config.php');
 
 // Add a leading http:// if it doesn't exist
 if(!preg_match('|^https?://|', $_POST['to'])) {
@@ -9,7 +9,7 @@ if(!preg_match('|^https?://|', $_POST['to'])) {
 }
 
 // Make sure there are no slashes, otherwise it's not a valid "to" address
-if(strpos($from, '/', 8) !== FALSE) {
+if(strpos($to, '/', 8) !== FALSE) {
 	die('Error: The "to" address must be only a domain name with no path.' . "\n");
 }
 

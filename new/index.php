@@ -1,6 +1,3 @@
-<?php
-include('config.php');
-?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -8,9 +5,6 @@ include('config.php');
 </head>
 <body>
 
-<?php
-
-?>
 <form action="send.php" method="post">
 <table cellpadding="3" border="1" style="border-collapse: collapse; width: 480px;">
 	<tr>
