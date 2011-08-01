@@ -54,3 +54,24 @@ It will attempt to send the message to you via email if you've defined your emai
 config file, or it will send via Tropo if you have a Tropo token entered.
 
 You can easily define other destinations for the message in this script.
+
+
+Configuring Tropo
+=================
+
+To send received messages to you via SMS, you'll need to create a quick Tropo app. Create an account
+at http://tropo.com, this service is completely free for development. Create a new Scripting app
+and name it send_sms.rb. Paste in the following code, which will allow this messaging project to forward
+SMSs to your phone number.
+
+```ruby
+message($message, { 
+    :to => "+1"+$number, 
+    :network=>'SMS'
+    })
+```
+
+Add a phone number to your Tropo app. Finally, copy the outbound messaging token from tropo.com and paste 
+it into the config file. Now you will get messages sent to your domain forwarded to your cell phone!
+
+

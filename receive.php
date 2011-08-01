@@ -38,12 +38,13 @@ if(array_key_exists('from', $_POST) && array_key_exists('text', $_POST)) {
 		$verified = TRUE;
 	}
 
-	$msg = $domain . ': ' . $_POST['text'];
-
-	if($verified)
+	if($verified) {
+		$msg = $domain . ': ' . $_POST['text'];
 		sendAndCloseConnection("Success: Your message was verified and sent!\n");
-	else
+	} else {
+		$msg = '(' . $domain . ') ' . $_POST['text'];
 		sendAndCloseConnection("Success: Your message was sent without verification.\n");
+	}
 	
 	if(isset($N))
 		$N->Send($msg);
@@ -60,13 +61,16 @@ if(array_key_exists('from', $_POST) && array_key_exists('text', $_POST)) {
 		$params = array(
 			'action' => 'create',
 			'token' => TROPO_TOKEN,
-			'text' => $msg
+			'message' => $msg,
+			'number' => SMS_RECIPIENT
 		);
 		file_get_contents('https://api.tropo.com/1.0/sessions?' . http_build_query($params));
 	}
 	
 	if(defined('EMAIL_RECIPIENT') && EMAIL_RECIPIENT) {
-		mail(EMAIL_RECIPIENT, 'Message from ' . $from, $_POST['text']);
+		$headers = array();
+		$headers[] = 'From: ' . $domain . ' <indieweb@' . $_SERVER['SERVER_NAME'] . '>';
+		mail(EMAIL_RECIPIENT, 'Message from ' . $domain, $_POST['text'], implode("\r\n", $headers));
 	}
 }
 else if(array_key_exists('message_id', $_POST)) {
