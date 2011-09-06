@@ -45,7 +45,7 @@ if(array_key_exists('from', $_POST) && array_key_exists('text', $_POST)) {
 		$factorization = new PrimeFactor($challengeInt);
 		$challengeAnswer = '' . $factorization;
 		
-		debug('Got a reply: ' . $output . ', our answer is ' . $challengeAnswer);
+		debug('Got a reply: ' . $output . ', expected answer is ' . $challengeAnswer);
 		
 		if($output != $challengeAnswer) {
 			echo '-' . $output . $from . "-\n";
@@ -162,9 +162,11 @@ class PrimeFactor {
 	}
 	
 	public function __toString() {
-		$s = '';
-		return '{' . implode(',', $this->factors) . '}';
-		return $s;
+		$parts = array();
+		foreach(array_count_values($this->factors) as $n=>$c) {
+			$parts[] = '{' . $n . ',' . $c . '}';
+		}
+		return '{' . implode(',', $parts) . '}';
 	}
 	
 	private function run() {
