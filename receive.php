@@ -24,15 +24,32 @@ if(array_key_exists('from', $_POST) && array_key_exists('text', $_POST)) {
 
 	// If a 'message_id' parameter is present, query the sender to ask if this message came from them
 	if(array_key_exists('message_id', $_POST)) {
-		$ch = curl_init('http://' . $from . '/');
+		$challengeInt = rand(100,999);
+	
+		debug('Sending challenge to ' . $domain . ': ' . $challengeInt);
+	
+		$ch = curl_init('http://' . $domain . '/');
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 		curl_setopt($ch, CURLOPT_POST, TRUE);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(array('message_id' => $_POST['message_id'])));
-		$output = curl_exec($ch);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(array(
+			'message_id' => $_POST['message_id'],
+			'challenge' => 'FactorInteger[' . $challengeInt . ']'
+		)));
+		$output = trim(curl_exec($ch));
 		
 		// If the remote server did not confirm the message, don't send it.
 		if($output == 'denied') {
-			msg('Error: "From" domain (' . $from . ') did not confirm the message');
+			msg('Error: "From" domain (' . $domain . ') did not confirm the message');
+		}
+		
+		$factorization = new PrimeFactor($challengeInt);
+		$challengeAnswer = '' . $factorization;
+		
+		debug('Got a reply: ' . $output . ', our answer is ' . $challengeAnswer);
+		
+		if($output != $challengeAnswer) {
+			echo '-' . $output . $from . "-\n";
+			msg('Error: "From" domain (' . $domain . ') did not answer the challenge correctly');
 		}
 		
 		$verified = TRUE;
@@ -82,7 +99,17 @@ else if(array_key_exists('message_id', $_POST)) {
 	$message_id = preg_replace('/[^a-z0-9-]/', '', $_POST['message_id']);
 	
 	if(file_exists('sent/' . $message_id . '.txt')) {
-		msg('confirmed');
+		// Now solve the challenge they sent
+		if(array_key_exists('challenge', $_POST) && preg_match('/FactorInteger\[(\d+)\]/', $_POST['challenge'], $match)) {
+			if($match[1] < 4294967295) {
+				$factorization = new PrimeFactor($match[1]);
+				msg(''.$factorization);
+			} else {
+				msg('challenge denied');
+			}
+		} else {
+			msg('confirmed');
+		}
 	} else {
 		msg('denied');
 	}
@@ -100,6 +127,12 @@ function msg($msg) {
 	die();
 }
 
+function debug($msg) {
+	global $N;
+	if(isset($N))
+		$N->Send('Debug: ' . $_SERVER['SERVER_NAME'] . ' ' . $msg);
+}
+
 function sendAndCloseConnection($msg) {
 	// Close the user's browser connection but keep the PHP script running
 	// See http://www.php.net/manual/en/features.connection-handling.php#71172
@@ -114,4 +147,42 @@ function sendAndCloseConnection($msg) {
 	header("Content-Length: $size");
 	ob_end_flush();
 	flush();
+}
+
+class PrimeFactor {
+	public $factors = array();
+	private $num;
+	
+	public function __construct($num) {
+		$this->num = $num;
+		$run = true;
+		while($run && @$this->factors[0] != $num) {
+			$run = $this->run();
+		}
+	}
+	
+	public function __toString() {
+		$s = '';
+		return '{' . implode(',', $this->factors) . '}';
+		return $s;
+	}
+	
+	private function run() {
+		if($this->num == 1) {
+			return ;
+		}
+		$this->root = ceil(sqrt($this->num)) + 1;
+		$i = 2;
+		while($i <= $this->root) {
+			$this->count++;
+			if($this->num % $i == 0) {
+				$this->factors[] = $i;
+				$this->num = $this->num / $i;
+				return true;
+			}
+			$i++;
+		}
+		$this->factors[] = $this->num;
+		return false;
+	}
 }
